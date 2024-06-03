@@ -66,29 +66,33 @@ while True:
     ret, main = capture.read()
     height, width, _ = main.shape
 
-    frame = main[300: 1080, 400: 1520]
+    frame = main[300: 1080, 440: 1470]
 
     mask = object_detector.apply(frame)
-    blurred = cv2.GaussianBlur(frame, (3, 3), 0)
-    mask = cv2.cvtColor(blurred,cv2.COLOR_BGR2HSV)  
+    mask = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)  
     lower_range = np.array([24, 100, 100], dtype=np.uint8) 
     upper_range = np.array([44, 255, 255], dtype=np.uint8)
-    mask = cv2.inRange(mask,lower_range,upper_range)
+    lower_range2 = np.array([0,0,235-70])
+    upper_range2 = np.array([255,90,255])
+    mask1 = cv2.inRange(mask,lower_range,upper_range)
+    mask2 = cv2.inRange(mask,lower_range2,upper_range2)
+    mask = mask2 | mask1
     
     _, mask = cv2.threshold(mask, 254, 255, cv2.THRESH_BINARY)
     contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    detections = []
-    for contour in contours:
-        area = cv2.contourArea(contour)
-        if area > 10:
-            x, y, w, h = cv2.boundingRect(contour)
+    # detections = []
+    # for contour in contours:
+    #     area = cv2.contourArea(contour)
+    #     if area > 10:
+    #         x, y, w, h = cv2.boundingRect(contour)
 
-            detections.append([x, y, w, h])
+    #         detections.append([x, y, w, h])
 
-    boxes_ids = tracker.update(detections)
-    for box_id in boxes_ids:
-        x, y, w, h, id = box_id
-        cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 3)
+    # boxes_ids = tracker.update(detections)
+    # for box_id in boxes_ids:
+    #     x, y, w, h, id = box_id
+    #     cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 3)
+    frame = cv2.bitwise_and(frame,frame,mask=mask)
     cv2.imshow("mask", mask)
     cv2.imshow("main", main)
     cv2.imshow("frame", frame)
